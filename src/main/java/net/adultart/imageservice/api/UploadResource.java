@@ -10,30 +10,27 @@ import net.adultart.imageservice.dto.ImageUploadInfoDto;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
 import net.adultart.imageservice.model.ImageStatus;
 import net.adultart.imageservice.service.ImageService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
-import software.amazon.awssdk.services.sqs.model.SendMessageResponse;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-@Path("/hello")
+@Path("/image")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
@@ -57,7 +54,7 @@ public class UploadResource {
     ImageService imageService;
 
     @POST
-    @Path("/signed")
+    @Path("/request")
     @Authenticated
     public ImageUploadInfoDto signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
         LOGGER.info(jwt.getSubject());

@@ -8,7 +8,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
-import java.util.Optional;
 
 @ApplicationScoped
 public class ImageServiceImpl implements ImageService {

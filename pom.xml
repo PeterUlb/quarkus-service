@@ -122,6 +122,20 @@
             <version>${testcontainers.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>localstack</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!--    Testcontainers uses SDK1-->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.11.974</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
     <build>
         <plugins>
@@ -155,16 +169,6 @@
                 </configuration>
             </plugin>
         </plugins>
-        <resources>
-            <resource>
-                <filtering>true</filtering><!-- if it is necessary -->
-                <directory>${project.basedir}/config</directory><!-- from -->
-                <targetPath>${project.build.directory}/config</targetPath><!-- to -->
-                <includes><!-- what -->
-                    <include>*</include>
-                </includes>
-            </resource>
-        </resources>
     </build>
     <profiles>
         <profile>

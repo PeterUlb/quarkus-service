@@ -9,6 +9,14 @@ public class ImageUploadRequestDto {
     @NotBlank
     private String fileName;
 
+    public ImageUploadRequestDto() {
+    }
+
+    public ImageUploadRequestDto(@Max(10485760) long bytes, @NotBlank String fileName) {
+        this.bytes = bytes;
+        this.fileName = fileName;
+    }
+
     public long getBytes() {
         return bytes;
     }
