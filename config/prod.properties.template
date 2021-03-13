@@ -1,0 +1,19 @@
+# Copy this template to /target/config for custom development settings (without %prod)
+# This contains local properties for development
+# In prod, this will be read from mounted config-application.properties and secret-application.properties
+######################
+########CONFIG########
+######################
+%prod.config_ordinal=5000
+%prod.aws.image.bucket=
+%prod.aws.image.created-queue-url=
+%prod.quarkus.s3.aws.region=
+%prod.quarkus.sqs.aws.region=
+
+######################
+#######SECRETS########
+######################
+%prod.quarkus.s3.aws.credentials.static-provider.access-key-id=
+%prod.quarkus.sqs.aws.credentials.static-provider.access-key-id=
+%prod.quarkus.s3.aws.credentials.static-provider.secret-access-key=
+%prod.quarkus.sqs.aws.credentials.static-provider.secret-access-key=
