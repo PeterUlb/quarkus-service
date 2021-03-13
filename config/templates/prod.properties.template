@@ -1,4 +1,4 @@
-# Copy this template to /target/config for custom development settings (without %prod)
+# Copy this template to /config for custom development settings (without %prod)
 # This contains local properties for development
 # In prod, this will be read from mounted config-application.properties and secret-application.properties
 ######################
@@ -9,6 +9,7 @@
 %prod.aws.image.created-queue-url=
 %prod.quarkus.s3.aws.region=
 %prod.quarkus.sqs.aws.region=
+%prod.mp.jwt.verify.publickey.location=
 
 ######################
 #######SECRETS########

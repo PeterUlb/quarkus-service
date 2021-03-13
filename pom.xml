@@ -18,6 +18,7 @@
         <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
         <quarkus.platform.version>1.12.1.Final</quarkus.platform.version>
         <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
+        <testcontainers.version>1.12.5</testcontainers.version>
     </properties>
     <dependencyManagement>
         <dependencies>
@@ -109,6 +110,18 @@
             <artifactId>rest-assured</artifactId>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -142,16 +155,16 @@
                 </configuration>
             </plugin>
         </plugins>
-        <!--    <resources>-->
-        <!--      <resource>-->
-        <!--        <filtering>true</filtering>&lt;!&ndash; if it is neccessary &ndash;&gt;-->
-        <!--        <directory>${project.basedir}/config</directory>&lt;!&ndash; from &ndash;&gt;-->
-        <!--        <targetPath>${project.build.directory}/config</targetPath>&lt;!&ndash; to &ndash;&gt;-->
-        <!--        <includes>&lt;!&ndash; what &ndash;&gt;-->
-        <!--          <include>prod.properties.template</include>-->
-        <!--        </includes>-->
-        <!--      </resource>-->
-        <!--    </resources>-->
+            <resources>
+              <resource>
+                <filtering>true</filtering><!-- if it is neccessary -->
+                <directory>${project.basedir}/config</directory><!-- from -->
+                <targetPath>${project.build.directory}/config</targetPath><!-- to -->
+                <includes><!-- what -->
+                  <include>*</include>
+                </includes>
+              </resource>
+            </resources>
     </build>
     <profiles>
         <profile>

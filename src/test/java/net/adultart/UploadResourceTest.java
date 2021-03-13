@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 //import static org.hamcrest.CoreMatchers.is;
 
 @QuarkusTest
-public class ExampleResourceTest {
+public class UploadResourceTest {
 
     @Test
     public void testHelloEndpoint() {
