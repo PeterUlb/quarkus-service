@@ -8,6 +8,9 @@ import io.quarkus.security.Authenticated;
 import net.adultart.imageservice.config.AwsImageConfig;
 import net.adultart.imageservice.dto.ImageUploadInfoDto;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
+import net.adultart.imageservice.model.ImageStatus;
+import net.adultart.imageservice.service.ImageService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.entity.ContentType;
 import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.jboss.logging.Logger;
@@ -45,24 +48,26 @@ public class UploadResource {
     SqsClient sqs;
 
     @Inject
-    S3Client s3;
-
-    @Inject
     S3Presigner s3Presigner;
 
     @Inject
     AwsImageConfig awsImageConfig;
 
+    @Inject
+    ImageService imageService;
+
     @POST
     @Path("/signed")
     @Authenticated
     public ImageUploadInfoDto signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
-        LOGGER.warn(jwt.getSubject());
+        LOGGER.info(jwt.getSubject());
+
+        String externalKey = imageService.createImageEntry(imageUploadRequestDto.getFileName(), imageUploadRequestDto.getBytes());
 
         PresignedPutObjectRequest presignedPutObjectRequest = s3Presigner.presignPutObject(popr -> popr
                 .putObjectRequest(por -> por
                                 .bucket(awsImageConfig.getBucket())
-                                .key("uploads/" + imageUploadRequestDto.getFileName())
+                                .key("uploads/" + externalKey)
 //                        .acl(ObjectCannedACL.PUBLIC_READ_WRITE)
                                 .contentType(ContentType.IMAGE_PNG.getMimeType())
                                 .metadata(Map.of("owner", jwt.getSubject()))
@@ -75,24 +80,33 @@ public class UploadResource {
     }
 
     @Scheduled(every = "2s")
-    void testReceive() throws JsonProcessingException {
+    void testReceive() {
         List<Message> messages = sqs.receiveMessage(m -> m
                 .maxNumberOfMessages(10)
                 .queueUrl(awsImageConfig.getCreatedQueueUrl()))
                 .messages();
-        ObjectMapper objectMapper = new ObjectMapper();
 
         for (Message message : messages) {
-            LOGGER.debug(message.body());
-
-            JsonNode json = objectMapper.readTree(message.body());
-            String key = json.at("/Records/0/s3/object/key").asText();
-            LOGGER.info(key);
-
-
-            HeadObjectResponse headObjectResponse = s3.headObject(builder -> builder.bucket(awsImageConfig.getBucket()).key(key));
-            LOGGER.info(headObjectResponse.metadata());
+            try {
+                processMessage(message);
+            } catch (JsonProcessingException e) {
+                // In this case, the message is not processable, delete from queue
+                sqs.deleteMessage(m -> m.queueUrl(awsImageConfig.getCreatedQueueUrl()).receiptHandle(message.receiptHandle()));
+                continue;
+            }
             sqs.deleteMessage(m -> m.queueUrl(awsImageConfig.getCreatedQueueUrl()).receiptHandle(message.receiptHandle()));
         }
+    }
+
+    private void processMessage(Message message) throws JsonProcessingException {
+        LOGGER.debug(message.body());
+        JsonNode json = new ObjectMapper().readTree(message.body());
+        String key = json.at("/Records/0/s3/object/key").asText();
+        int pos = key.lastIndexOf("/");
+        if (pos != -1) {
+            key = key.substring(pos + 1);
+        }
+        LOGGER.info(key);
+        imageService.updateImageState(key, ImageStatus.UPLOADED);
     }
 }

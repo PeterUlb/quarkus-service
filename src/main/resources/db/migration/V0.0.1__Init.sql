@@ -1,7 +1,8 @@
-CREATE TABLE quarkus
+CREATE TABLE image
 (
-    id   INT,
-    name VARCHAR(20)
+    id bigserial NOT NULL,
+    externalKey character varying(20) NOT NULL,
+    imageStatus character varying(20) NOT NULL DEFAULT 'REQUESTED',
+    PRIMARY KEY (id),
+    CONSTRAINT uq_external_id UNIQUE (externalKey)
 );
-INSERT INTO quarkus(id, name)
-VALUES (1, 'QUARKED');

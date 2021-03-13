@@ -10,10 +10,14 @@
 %prod.quarkus.s3.aws.region=
 %prod.quarkus.sqs.aws.region=
 %prod.mp.jwt.verify.publickey.location=
+%prod.quarkus.datasource.db-kind=
+%prod.quarkus.datasource.username=
+%prod.quarkus.datasource.jdbc.url=
 
 ######################
 #######SECRETS########
 ######################
+%prod.quarkus.datasource.password=
 %prod.quarkus.s3.aws.credentials.static-provider.access-key-id=
 %prod.quarkus.sqs.aws.credentials.static-provider.access-key-id=
 %prod.quarkus.s3.aws.credentials.static-provider.secret-access-key=
