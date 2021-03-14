@@ -1,0 +1,13 @@
+config_ordinal=1000
+######################
+########CONFIG########
+######################
+%prod.config_ordinal=
+%prod.aws.image.bucket=
+%prod.aws.image.created-queue-url=
+%prod.quarkus.s3.aws.region=
+%prod.quarkus.sqs.aws.region=
+%prod.quarkus.datasource.jdbc.url=
+# This one MUST be empty. Else it's used as fallback
+%prod.mp.jwt.verify.publickey=
+%prod.mp.jwt.verify.publickey.location=
