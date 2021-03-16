@@ -11,3 +11,4 @@ config_ordinal=1000
 # This one MUST be empty. Else it's used as fallback
 %prod.mp.jwt.verify.publickey=
 %prod.mp.jwt.verify.publickey.location=
+%prod.country-api/mp-rest/url=
