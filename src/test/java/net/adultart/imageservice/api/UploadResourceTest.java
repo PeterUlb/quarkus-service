@@ -19,7 +19,7 @@ import static io.restassured.RestAssured.given;
 import static javax.ws.rs.core.HttpHeaders.ACCEPT;
 import static javax.ws.rs.core.HttpHeaders.CONTENT_TYPE;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
-import static javax.ws.rs.core.Response.Status.OK;
+import static javax.ws.rs.core.Response.Status.*;
 
 @QuarkusTest
 @QuarkusTestResource(PostgresResource.class)
@@ -45,15 +45,50 @@ class UploadResourceTest {
     }
 
     @Test
-    public void testHelloEndpoint() {
+    public void testSignRequestSizeRejected() {
         String jwtToken = JwtTokenGenerator.generateToken();
+
+        long size = 50 * 1024 * 1024;
+        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto(1L, "Huge Image", "A really huge image", "test.png", size);
 
         given()
                 .header("Authorization", "Bearer " + jwtToken)
-                .body(new ImageUploadRequestDto(100, "myImage.png"))
+                .body(hugeImage)
+                .when()
+                .post("/image/request")
+                .then()
+                .statusCode(BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void testSignRequestAccepted() {
+        String jwtToken = JwtTokenGenerator.generateToken();
+
+        long size = 3 * 1024 * 1024;
+        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto(1L, "Huge Image", "A really huge image", "test.png", size);
+
+        given()
+                .header("Authorization", "Bearer " + jwtToken)
+                .body(hugeImage)
                 .when()
                 .post("/image/request")
                 .then()
                 .statusCode(OK.getStatusCode());
+    }
+
+    @Test
+    public void testSignRequestUnauthenticated() {
+        String jwtToken = "INVALID";
+
+        long size = 3 * 1024 * 1024;
+        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto(1L, "Huge Image", "A really huge image", "test.png", size);
+
+        given()
+                .header("Authorization", "Bearer " + jwtToken)
+                .body(hugeImage)
+                .when()
+                .post("/image/request")
+                .then()
+                .statusCode(UNAUTHORIZED.getStatusCode());
     }
 }

@@ -1,8 +1,11 @@
-CREATE TABLE image
-(
-    id          bigserial             NOT NULL,
-    externalKey character varying(20) NOT NULL,
-    imageStatus character varying(20) NOT NULL DEFAULT 'REQUESTED',
-    PRIMARY KEY (id),
-    CONSTRAINT uq_external_id UNIQUE (externalKey)
-);
+SET timezone TO 'UTC';
+
+-- Set update timestamp
+CREATE OR REPLACE FUNCTION set_update_timestamp()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.updatedAt = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

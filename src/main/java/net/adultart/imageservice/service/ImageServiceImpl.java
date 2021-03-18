@@ -1,5 +1,6 @@
 package net.adultart.imageservice.service;
 
+import net.adultart.imageservice.dto.ImageUploadRequestDto;
 import net.adultart.imageservice.model.Image;
 import net.adultart.imageservice.model.ImageStatus;
 import net.adultart.imageservice.repository.ImageRepository;
@@ -16,8 +17,13 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
-    public String createImageEntry(String imageName, long imageSize) {
-        Image image = Image.withInitialState(generateExternalKey());
+    public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto) {
+        Image image = Image.withInitialState(generateExternalKey(),
+                imageUploadRequestDto.getAccountId(),
+                imageUploadRequestDto.getTitle(),
+                imageUploadRequestDto.getDescription(),
+                imageUploadRequestDto.getFileName(),
+                imageUploadRequestDto.getSize());
         imageRepository.persist(image);
         return image.getExternalKey();
     }

@@ -59,7 +59,7 @@ public class UploadResource {
     public ImageUploadInfoDto signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
         LOGGER.info(jwt.getSubject());
 
-        String externalKey = imageService.createImageEntry(imageUploadRequestDto.getFileName(), imageUploadRequestDto.getBytes());
+        String externalKey = imageService.createImageEntry(imageUploadRequestDto);
 
         PresignedPutObjectRequest presignedPutObjectRequest = s3Presigner.presignPutObject(popr -> popr
                 .putObjectRequest(por -> por
@@ -68,7 +68,7 @@ public class UploadResource {
 //                        .acl(ObjectCannedACL.PUBLIC_READ_WRITE)
                                 .contentType(ContentType.IMAGE_PNG.getMimeType())
                                 .metadata(Map.of("owner", jwt.getSubject()))
-                                .contentLength(imageUploadRequestDto.getBytes())
+                                .contentLength(imageUploadRequestDto.getSize())
                 )
                 .signatureDuration(Duration.ofMinutes(20)));
         return new ImageUploadInfoDto(presignedPutObjectRequest.url().toExternalForm(),

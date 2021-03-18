@@ -22,7 +22,7 @@ public class ContainerTest {
     @Test
     @Transactional
     public void testWithContainers() {
-        imageRepository.persist(Image.withInitialState("TEST"));
+        imageRepository.persist(Image.withInitialState("TEST", 1L, "", "", "", 1L));
         imageRepository.flush();
         Optional<Image> image = imageRepository.findByExternalId("TEST");
         assertNotNull(image.orElse(null));
