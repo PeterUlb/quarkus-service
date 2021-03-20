@@ -22,8 +22,8 @@ public class WiremockCountries implements QuarkusTestResourceLifecycleManager {
                         .withHeader("Content-Type", "application/json")
                         .withBody(
                                 "[{" +
-                                        "\"name\": \"Deutschlandoooo\"," +
-                                        "\"capital\": \"Berlin\"" +
+                                        "\"name\": \"MockDeutschland\"," +
+                                        "\"capital\": \"MockBerlin\"" +
                                         "}]"
                         )));
 

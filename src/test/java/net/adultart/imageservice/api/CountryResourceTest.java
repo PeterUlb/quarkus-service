@@ -47,8 +47,8 @@ class CountryResourceTest {
                 .then()
                 .statusCode(200)
                 .body("$.size()", is(1),
-                        "[0].name", is("Deutschlandoooo"),
-                        "[0].capital", is("Berlin")
+                        "[0].name", is("MockDeutschland"),
+                        "[0].capital", is("MockBerlin")
 //                        "[0].currencies.size()", is(1),
 //                        "[0].currencies[0].name", is("Euro")
                 );
