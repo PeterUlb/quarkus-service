@@ -6,8 +6,6 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 public class ImageUploadRequestDto {
-    @NotNull
-    private Long accountId;
     @NotBlank
     @Size(max = 255)
     private String title;
@@ -17,25 +15,17 @@ public class ImageUploadRequestDto {
     @Size(max = 255)
     private String fileName;
     @Max(10485760)
+    @NotNull
     private Long size;
 
     public ImageUploadRequestDto() {
     }
 
-    public ImageUploadRequestDto(@NotNull Long accountId, @NotBlank String title, @NotNull String description, @NotBlank String fileName, @Max(10485760) Long size) {
-        this.accountId = accountId;
+    public ImageUploadRequestDto(@NotBlank String title, @NotNull String description, @NotBlank String fileName, @Max(10485760) Long size) {
         this.title = title;
         this.description = description;
         this.fileName = fileName;
         this.size = size;
-    }
-
-    public Long getAccountId() {
-        return accountId;
-    }
-
-    public void setAccountId(Long accountId) {
-        this.accountId = accountId;
     }
 
     public String getTitle() {

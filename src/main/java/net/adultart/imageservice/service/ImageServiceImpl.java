@@ -17,9 +17,9 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
-    public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto) {
+    public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto, long accountId) {
         Image image = Image.withInitialState(generateExternalKey(),
-                imageUploadRequestDto.getAccountId(),
+                accountId,
                 imageUploadRequestDto.getTitle(),
                 imageUploadRequestDto.getDescription(),
                 imageUploadRequestDto.getFileName(),

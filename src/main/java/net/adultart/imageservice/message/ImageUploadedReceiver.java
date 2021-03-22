@@ -6,12 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.scheduler.Scheduled;
 import net.adultart.imageservice.api.UploadResource;
 import net.adultart.imageservice.config.AwsImageConfig;
+import net.adultart.imageservice.config.UploadProcessorConfig;
 import net.adultart.imageservice.model.ImageStatus;
 import net.adultart.imageservice.service.ImageService;
 import org.jboss.logging.Logger;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import java.util.List;
@@ -20,44 +22,51 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 @ApplicationScoped
-public class FooReceiver {
+public class ImageUploadedReceiver {
 
     private static final Logger LOGGER = Logger.getLogger(UploadResource.class);
-    // TODO Config Property
-    private final int poolSize = 2;
-    // TODO Config Property
-    private final int queueSize = 50;
+
     @Inject
     SqsClient sqs;
+    @Inject
+    UploadProcessorConfig uploadProcessorConfig;
     @Inject
     AwsImageConfig awsImageConfig;
     @Inject
     ImageService imageService;
-    ThreadPoolExecutor executorService;
+    ThreadPoolExecutor executor;
 
-    public FooReceiver() {
-        executorService = new ThreadPoolExecutor(poolSize, poolSize,
+    @PostConstruct
+    void init() {
+        executor = new ThreadPoolExecutor(uploadProcessorConfig.getPoolSize(), uploadProcessorConfig.getPoolSize(),
                 0L, TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(queueSize));
+                new ArrayBlockingQueue<>(uploadProcessorConfig.getQueueSize()));
     }
 
-    // TODO Config Property
-    @Scheduled(every = "5s")
-    void testReceive() {
-        List<Message> messages = sqs.receiveMessage(m -> m
-                .maxNumberOfMessages(Math.min(10, executorService.getQueue().remainingCapacity())) // SQS Limit is 10
-                .queueUrl(awsImageConfig.getCreatedQueueUrl()))
-                .messages();
+    @Scheduled(every = "{upload.processor.poll-delay}")
+    public void pollImageUploadedMessage() {
+        while (executor.getQueue().remainingCapacity() > 0) {
+            List<Message> messages = sqs.receiveMessage(m -> m
+                    .maxNumberOfMessages(Math.min(10, executor.getQueue().remainingCapacity())) // SQS Limit is 10, and do not poll more than we can process
+                    .queueUrl(awsImageConfig.getCreatedQueueUrl()))
+                    .messages();
 
-        for (Message message : messages) {
-            executorService.submit(() -> {
-                try {
-                    processMessage(message);
-                } catch (JsonProcessingException e) {
-                    LOGGER.error("Processing of ImageCreated message failed", e);
-                }
-                sqs.deleteMessage(m -> m.queueUrl(awsImageConfig.getCreatedQueueUrl()).receiptHandle(message.receiptHandle()));
-            });
+            LOGGER.debug(messages.size());
+
+            if (messages.isEmpty()) {
+                return;
+            }
+
+            for (Message message : messages) {
+                executor.submit(() -> {
+                    try {
+                        processMessage(message);
+                    } catch (JsonProcessingException e) {
+                        LOGGER.error("Processing of ImageCreated message failed", e);
+                    }
+                    sqs.deleteMessage(m -> m.queueUrl(awsImageConfig.getCreatedQueueUrl()).receiptHandle(message.receiptHandle()));
+                });
+            }
         }
     }
 

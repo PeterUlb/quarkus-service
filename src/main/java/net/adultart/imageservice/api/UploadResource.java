@@ -46,9 +46,7 @@ public class UploadResource {
     @Path("/request")
     @Authenticated
     public ImageUploadInfoDto signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
-        LOGGER.info(jwt.getSubject());
-
-        String externalKey = imageService.createImageEntry(imageUploadRequestDto);
+        String externalKey = imageService.createImageEntry(imageUploadRequestDto, Long.parseLong(jwt.getSubject()));
 
         PresignedPutObjectRequest presignedPutObjectRequest = s3Presigner.presignPutObject(popr -> popr
                 .putObjectRequest(por -> por
