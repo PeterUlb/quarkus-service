@@ -7,7 +7,6 @@ import io.quarkus.scheduler.Scheduled;
 import net.adultart.imageservice.api.UploadResource;
 import net.adultart.imageservice.config.AwsImageConfig;
 import net.adultart.imageservice.config.UploadProcessorConfig;
-import net.adultart.imageservice.model.ImageStatus;
 import net.adultart.imageservice.service.ImageService;
 import org.jboss.logging.Logger;
 import software.amazon.awssdk.services.sqs.SqsClient;
@@ -48,6 +47,7 @@ public class ImageUploadedReceiver {
         while (executor.getQueue().remainingCapacity() > 0) {
             List<Message> messages = sqs.receiveMessage(m -> m
                     .maxNumberOfMessages(Math.min(10, executor.getQueue().remainingCapacity())) // SQS Limit is 10, and do not poll more than we can process
+                    .waitTimeSeconds(7)
                     .queueUrl(awsImageConfig.getCreatedQueueUrl()))
                     .messages();
 
@@ -64,6 +64,7 @@ public class ImageUploadedReceiver {
                     } catch (JsonProcessingException e) {
                         LOGGER.error("Processing of ImageCreated message failed", e);
                     }
+                    LOGGER.debug("Delete msg");
                     sqs.deleteMessage(m -> m.queueUrl(awsImageConfig.getCreatedQueueUrl()).receiptHandle(message.receiptHandle()));
                 });
             }
@@ -74,11 +75,7 @@ public class ImageUploadedReceiver {
         LOGGER.debug(message.body());
         JsonNode json = new ObjectMapper().readTree(message.body());
         String key = json.at("/Records/0/s3/object/key").asText();
-        int pos = key.lastIndexOf("/");
-        if (pos != -1) {
-            key = key.substring(pos + 1);
-        }
-        LOGGER.info(key);
-        imageService.updateImageState(key, ImageStatus.UPLOADED);
+        LOGGER.debug(key);
+        imageService.processImageAfterUpload(key);
     }
 }

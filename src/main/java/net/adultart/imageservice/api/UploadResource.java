@@ -52,7 +52,7 @@ public class UploadResource {
                 .putObjectRequest(por -> por
                                 .bucket(awsImageConfig.getBucket())
                                 .key("uploads/" + externalKey)
-//                        .acl(ObjectCannedACL.PUBLIC_READ_WRITE)
+//                                .acl(ObjectCannedACL.PUBLIC_READ)
                                 .contentType(ContentType.IMAGE_PNG.getMimeType())
                                 .metadata(Map.of("owner", jwt.getSubject()))
                                 .contentLength(imageUploadRequestDto.getSize())

@@ -1,10 +1,10 @@
 package net.adultart.imageservice.service;
 
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
-import net.adultart.imageservice.model.ImageStatus;
+import net.adultart.imageservice.exception.UnsupportedImageException;
 
 public interface ImageService {
     String createImageEntry(ImageUploadRequestDto imageUploadRequestDto, long accountId);
 
-    void updateImageState(String externalKey, ImageStatus imageStatus);
+    void processImageAfterUpload(String imageKey) throws UnsupportedImageException;
 }

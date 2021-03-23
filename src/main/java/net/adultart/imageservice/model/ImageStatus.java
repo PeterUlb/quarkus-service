@@ -4,4 +4,5 @@ public enum ImageStatus {
     REQUESTED,
     UPLOADED,
     VERIFIED,
+    REJECTED,
 }
