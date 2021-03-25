@@ -2,11 +2,15 @@ package net.adultart.imageservice.config;
 
 import io.quarkus.arc.config.ConfigProperties;
 
+import javax.validation.constraints.Max;
+
 @ConfigProperties(prefix = "upload.processor")
 public class UploadProcessorConfig {
     private int poolSize;
     private int queueSize;
-    private String pollDelay;
+    private int pollDelay;
+    @Max(20)
+    private int longPollingWait;
 
     public int getPoolSize() {
         return poolSize;
@@ -24,11 +28,19 @@ public class UploadProcessorConfig {
         this.queueSize = queueSize;
     }
 
-    public String getPollDelay() {
+    public int getPollDelay() {
         return pollDelay;
     }
 
-    public void setPollDelay(String pollDelay) {
+    public void setPollDelay(int pollDelay) {
         this.pollDelay = pollDelay;
+    }
+
+    public int getLongPollingWait() {
+        return longPollingWait;
+    }
+
+    public void setLongPollingWait(int longPollingWait) {
+        this.longPollingWait = longPollingWait;
     }
 }

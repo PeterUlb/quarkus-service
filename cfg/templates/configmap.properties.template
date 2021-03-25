@@ -12,3 +12,7 @@ config_ordinal=1000
 %prod.mp.jwt.verify.publickey=
 %prod.mp.jwt.verify.publickey.location=
 %prod.country-api/mp-rest/url=
+%prod.upload.processor.poll-delay=1
+%prod.upload.processor.pool-size=3
+%prod.upload.processor.queue-size=100
+%prod.upload.processor.long-polling-wait=20
