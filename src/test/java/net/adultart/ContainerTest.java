@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import javax.inject.Inject;
 import javax.transaction.Transactional;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -22,7 +23,7 @@ public class ContainerTest {
     @Test
     @Transactional
     public void testWithContainers() {
-        imageRepository.persist(Image.withInitialState("TEST", 1L, "", "", "", 1L));
+        imageRepository.persist(Image.withInitialState("TEST", 1L, "", "", "", 1L, Set.of()));
         imageRepository.flush();
         Optional<Image> image = imageRepository.findByExternalId("TEST");
         assertNotNull(image.orElse(null));

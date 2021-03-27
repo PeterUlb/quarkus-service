@@ -14,18 +14,18 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Set;
 
 @Path("/image")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @RequestScoped
+@Authenticated
 public class UploadResource {
 
     private static final Logger LOGGER = Logger.getLogger(UploadResource.class);
@@ -44,7 +44,6 @@ public class UploadResource {
 
     @POST
     @Path("/request")
-    @Authenticated
     public ImageUploadInfoDto signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
         String externalKey = imageService.createImageEntry(imageUploadRequestDto, Long.parseLong(jwt.getSubject()));
 
@@ -61,5 +60,15 @@ public class UploadResource {
         return new ImageUploadInfoDto(presignedPutObjectRequest.url().toExternalForm(),
                 presignedPutObjectRequest.httpRequest().method().name(),
                 presignedPutObjectRequest.signedHeaders());
+    }
+
+    @GET
+    @Path("/tag/{tag}")
+    public Response getImagesByTag(@PathParam("tag") String tag) {
+        Set<String> signedUrls = imageService.getSignedUrlsByTag(tag);
+        if (signedUrls.isEmpty()) {
+            return Response.noContent().build();
+        }
+        return Response.ok(signedUrls).build();
     }
 }

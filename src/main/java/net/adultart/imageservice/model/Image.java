@@ -2,6 +2,7 @@ package net.adultart.imageservice.model;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Set;
 
 @Entity
 public class Image {
@@ -39,6 +40,12 @@ public class Image {
     @Column
     private Long height;
 
+    @ManyToMany
+    @JoinTable(
+            joinColumns = @JoinColumn(name = "image_id"),
+            inverseJoinColumns = @JoinColumn(name = "image_tag_id"))
+    private Set<ImageTag> tags;
+
     @Enumerated(EnumType.STRING)
     private ImageStatus imageStatus;
 
@@ -48,7 +55,7 @@ public class Image {
     @Column(nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
-    public static Image withInitialState(String externalKey, Long accountId, String title, String description, String fileName, Long size) {
+    public static Image withInitialState(String externalKey, Long accountId, String title, String description, String fileName, Long size, Set<ImageTag> tags) {
         Image image = new Image();
         image.setExternalKey(externalKey);
         image.setAccountId(accountId);
@@ -57,6 +64,7 @@ public class Image {
         image.setFileName(fileName);
         image.setSize(size);
         image.setImageStatus(ImageStatus.REQUESTED);
+        image.setTags(tags);
         return image;
     }
 
@@ -146,6 +154,14 @@ public class Image {
 
     public void setHeight(Long height) {
         this.height = height;
+    }
+
+    public Set<ImageTag> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<ImageTag> tags) {
+        this.tags = tags;
     }
 
     public ImageStatus getImageStatus() {

@@ -4,6 +4,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.util.Set;
 
 public class ImageUploadRequestDto {
     @NotBlank
@@ -17,15 +18,18 @@ public class ImageUploadRequestDto {
     @Max(10485760)
     @NotNull
     private Long size;
+    @Size(max = 20)
+    private Set<String> tags;
 
     public ImageUploadRequestDto() {
     }
 
-    public ImageUploadRequestDto(@NotBlank String title, @NotNull String description, @NotBlank String fileName, @Max(10485760) Long size) {
+    public ImageUploadRequestDto(@NotBlank @Size(max = 255) String title, @NotNull String description, @NotBlank @Size(max = 255) String fileName, @Max(10485760) @NotNull Long size, @Size(max = 20) Set<String> tags) {
         this.title = title;
         this.description = description;
         this.fileName = fileName;
         this.size = size;
+        this.tags = tags;
     }
 
     public String getTitle() {
@@ -58,5 +62,13 @@ public class ImageUploadRequestDto {
 
     public void setSize(Long size) {
         this.size = size;
+    }
+
+    public Set<String> getTags() {
+        return tags;
+    }
+
+    public void setTags(Set<String> tags) {
+        this.tags = tags;
     }
 }

@@ -6,7 +6,9 @@ import net.adultart.imageservice.dto.ImageUploadRequestDto;
 import net.adultart.imageservice.exception.UnsupportedImageException;
 import net.adultart.imageservice.model.Image;
 import net.adultart.imageservice.model.ImageStatus;
+import net.adultart.imageservice.model.ImageTag;
 import net.adultart.imageservice.repository.ImageRepository;
+import net.adultart.imageservice.repository.ImageTagRepository;
 import net.adultart.imageservice.util.TikaUtil;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.tika.exception.TikaException;
@@ -18,11 +20,19 @@ import org.xml.sax.SAXException;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
+import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import java.io.IOException;
+import java.time.Duration;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @ApplicationScoped
 public class ImageServiceImpl implements ImageService {
@@ -30,6 +40,9 @@ public class ImageServiceImpl implements ImageService {
 
     @Inject
     ImageRepository imageRepository;
+
+    @Inject
+    ImageTagRepository imageTagRepository;
 
     @Inject
     S3Client s3Client;
@@ -40,18 +53,39 @@ public class ImageServiceImpl implements ImageService {
     @Inject
     TikaUtil tikaUtil;
 
+    @Inject
+    S3Presigner s3Presigner;
+
     @Override
     @Transactional
     public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto, long accountId) {
+        for (String tag : imageUploadRequestDto.getTags()) {
+            insertTag(tag);
+        }
+
+        Set<ImageTag> tags = imageUploadRequestDto.getTags().stream().map(s -> imageTagRepository.findByTag(s).orElseThrow()).collect(Collectors.toSet());
+
         Image image = Image.withInitialState(generateExternalKey(),
                 accountId,
                 imageUploadRequestDto.getTitle(),
                 imageUploadRequestDto.getDescription(),
                 imageUploadRequestDto.getFileName(),
-                imageUploadRequestDto.getSize());
+                imageUploadRequestDto.getSize(),
+                tags);
         imageRepository.persist(image);
         return image.getExternalKey();
     }
+
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    public void insertTag(String tag) {
+        ImageTag imageTag = new ImageTag();
+        imageTag.setTag(tag);
+        try {
+            imageTagRepository.persistAndFlush(imageTag);
+        } catch (PersistenceException ignored) {
+        }
+    }
+
 
     @Override
     @Transactional
@@ -112,6 +146,31 @@ public class ImageServiceImpl implements ImageService {
         image.setHeight(height);
         image.setMimeType(mimeType);
         image.setExtension(mimeTypeExtension);
+    }
+
+    @Override
+    public Set<String> getSignedUrlsByTag(String tag) {
+        ImageTag imageTag = imageTagRepository.findByTag(tag).orElse(null);
+        if (imageTag == null) {
+            return Collections.emptySet();
+        }
+
+        Set<Image> images = imageTag.getImages();
+        Set<String> signedUrls = new HashSet<>(images.size());
+        for (Image image : images) {
+            if (image.getImageStatus() != ImageStatus.VERIFIED) {
+                continue;
+            }
+            PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(
+                    builder -> builder
+                            .getObjectRequest(objReq -> objReq
+                                    .bucket(awsImageConfig.getBucket())
+                                    .key("uploads/" + image.getExternalKey()))
+                            .signatureDuration(Duration.ofMinutes(10)));
+            signedUrls.add(presignedGetObjectRequest.url().toExternalForm());
+        }
+
+        return signedUrls;
     }
 
     private String generateExternalKey() {
