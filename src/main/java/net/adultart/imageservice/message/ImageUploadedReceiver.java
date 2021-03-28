@@ -3,6 +3,7 @@ package net.adultart.imageservice.message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.quarkus.arc.properties.IfBuildProperty;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import net.adultart.imageservice.api.UploadResource;
@@ -21,6 +22,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 @ApplicationScoped
+@IfBuildProperty(name = "upload.processor.poll-enabled", stringValue = "true", enableIfMissing = true)
 public class ImageUploadedReceiver {
 
     private static final Logger LOGGER = Logger.getLogger(UploadResource.class);

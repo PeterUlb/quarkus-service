@@ -1,6 +1,6 @@
 # imageservice project
 
-Example project using quarkus.
+Image service project using quarkus.
 
 ## Configuration
 
@@ -42,6 +42,22 @@ The kubernetes deployments sets the environment variable `SMALLRYE_CONFIG_LOCATI
 Templates for both locations can be found in `./cfg/templates`.  
 It is recommended to pass the prod variable with `VM Options = -Dquarkus.profile=a,b,prod`, assign the highest ordinal
 and prefix all properties with `%prod`.
+
+## Dependencies
+
+A good overview for required dependencies can be found in the `/cfg/templates` folder. The following services are
+expected to run and be configured (for integration tests `wiremock` and `testcontainers` are used).
+
+1. Postgres db
+2. S3
+3. SQS
+4. Redis
+
+Example for local development
+
+```
+docker run --ulimit memlock=-1:-1 -it --rm=true --memory-swappiness=0 --name redis_ratelimit_test -p 6379:6379 redis:5.0.6
+```
 
 ## SmallRye Config Behavior
 

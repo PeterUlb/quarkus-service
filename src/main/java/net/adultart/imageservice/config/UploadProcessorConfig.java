@@ -11,6 +11,7 @@ public class UploadProcessorConfig {
     private int pollDelay;
     @Max(20)
     private int longPollingWait;
+    private boolean pollEnabled = true;
 
     public int getPoolSize() {
         return poolSize;
@@ -42,5 +43,13 @@ public class UploadProcessorConfig {
 
     public void setLongPollingWait(int longPollingWait) {
         this.longPollingWait = longPollingWait;
+    }
+
+    public boolean isPollEnabled() {
+        return pollEnabled;
+    }
+
+    public void setPollEnabled(boolean pollEnabled) {
+        this.pollEnabled = pollEnabled;
     }
 }

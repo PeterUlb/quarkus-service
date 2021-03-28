@@ -4,6 +4,7 @@ import io.quarkus.security.Authenticated;
 import net.adultart.imageservice.config.AwsImageConfig;
 import net.adultart.imageservice.dto.ImageUploadInfoDto;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
+import net.adultart.imageservice.interceptor.RateLimited;
 import net.adultart.imageservice.model.ImagePrivacy;
 import net.adultart.imageservice.service.ImageService;
 import org.apache.http.entity.ContentType;
@@ -13,6 +14,7 @@ import software.amazon.awssdk.services.s3.model.ObjectCannedACL;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
+import javax.annotation.security.PermitAll;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.validation.Valid;
@@ -46,7 +48,8 @@ public class UploadResource {
 
     @POST
     @Path("/request")
-    public ImageUploadInfoDto signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
+    @RateLimited(group = 1, maxRequests = 20)
+    public Response signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
         String externalKey = imageService.createImageEntry(imageUploadRequestDto, Long.parseLong(jwt.getSubject()));
 
         PresignedPutObjectRequest presignedPutObjectRequest = s3Presigner.presignPutObject(popr -> popr
@@ -63,9 +66,9 @@ public class UploadResource {
                     }
                 })
                 .signatureDuration(Duration.ofMinutes(20)));
-        return new ImageUploadInfoDto(presignedPutObjectRequest.url().toExternalForm(),
+        return Response.ok(new ImageUploadInfoDto(presignedPutObjectRequest.url().toExternalForm(),
                 presignedPutObjectRequest.httpRequest().method().name(),
-                presignedPutObjectRequest.signedHeaders());
+                presignedPutObjectRequest.signedHeaders())).build();
     }
 
     @GET
@@ -76,5 +79,13 @@ public class UploadResource {
             return Response.noContent().build();
         }
         return Response.ok(signedUrls).build();
+    }
+
+    @GET
+    @Path("/test")
+    @PermitAll
+    @RateLimited(group = 9998, maxRequests = 5)
+    public Response testRateLimit() {
+        return Response.ok().build();
     }
 }

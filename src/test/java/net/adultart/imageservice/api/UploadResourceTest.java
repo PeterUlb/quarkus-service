@@ -9,6 +9,7 @@ import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.Header;
 import net.adultart.containers.LocalStackResource;
 import net.adultart.containers.PostgresResource;
+import net.adultart.containers.RedisResource;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
 import net.adultart.imageservice.model.ImagePrivacy;
 import net.adultart.util.JwtTokenGenerator;
@@ -27,6 +28,7 @@ import static javax.ws.rs.core.Response.Status.*;
 @QuarkusTest
 @QuarkusTestResource(PostgresResource.class)
 @QuarkusTestResource(LocalStackResource.class)
+@QuarkusTestResource(RedisResource.class)
 class UploadResourceTest {
     @BeforeAll
     static void beforeAll() {

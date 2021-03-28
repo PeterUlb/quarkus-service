@@ -16,3 +16,4 @@ config_ordinal=1000
 %prod.upload.processor.pool-size=3
 %prod.upload.processor.queue-size=100
 %prod.upload.processor.long-polling-wait=20
+%prod.quarkus.redis.hosts=
