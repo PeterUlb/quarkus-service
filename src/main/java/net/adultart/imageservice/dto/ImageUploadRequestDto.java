@@ -1,5 +1,7 @@
 package net.adultart.imageservice.dto;
 
+import net.adultart.imageservice.model.ImagePrivacy;
+
 import javax.validation.constraints.Max;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -18,17 +20,20 @@ public class ImageUploadRequestDto {
     @Max(10485760)
     @NotNull
     private Long size;
+    @NotNull
+    private ImagePrivacy privacy;
     @Size(max = 20)
     private Set<String> tags;
 
     public ImageUploadRequestDto() {
     }
 
-    public ImageUploadRequestDto(@NotBlank @Size(max = 255) String title, @NotNull String description, @NotBlank @Size(max = 255) String fileName, @Max(10485760) @NotNull Long size, @Size(max = 20) Set<String> tags) {
+    public ImageUploadRequestDto(@NotBlank @Size(max = 255) String title, @NotNull String description, @NotBlank @Size(max = 255) String fileName, @Max(10485760) @NotNull Long size, @NotBlank ImagePrivacy privacy, @Size(max = 20) Set<String> tags) {
         this.title = title;
         this.description = description;
         this.fileName = fileName;
         this.size = size;
+        this.privacy = privacy;
         this.tags = tags;
     }
 
@@ -62,6 +67,14 @@ public class ImageUploadRequestDto {
 
     public void setSize(Long size) {
         this.size = size;
+    }
+
+    public ImagePrivacy getPrivacy() {
+        return privacy;
+    }
+
+    public void setPrivacy(ImagePrivacy privacy) {
+        this.privacy = privacy;
     }
 
     public Set<String> getTags() {

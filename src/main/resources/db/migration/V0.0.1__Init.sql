@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION set_update_timestamp()
     RETURNS TRIGGER AS
 $$
 BEGIN
-    NEW.updatedAt = NOW();
+    NEW.updated_at = NOW();
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;

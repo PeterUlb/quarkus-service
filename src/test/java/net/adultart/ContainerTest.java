@@ -4,6 +4,7 @@ import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import net.adultart.containers.PostgresResource;
 import net.adultart.imageservice.model.Image;
+import net.adultart.imageservice.model.ImagePrivacy;
 import net.adultart.imageservice.repository.ImageRepository;
 import org.junit.jupiter.api.Test;
 
@@ -23,7 +24,7 @@ public class ContainerTest {
     @Test
     @Transactional
     public void testWithContainers() {
-        imageRepository.persist(Image.withInitialState("TEST", 1L, "", "", "", 1L, Set.of()));
+        imageRepository.persist(Image.withInitialState("TEST", 1L, "", "", "", 1L, ImagePrivacy.PRIVATE, Set.of()));
         imageRepository.flush();
         Optional<Image> image = imageRepository.findByExternalId("TEST");
         assertNotNull(image.orElse(null));

@@ -10,6 +10,7 @@ import io.restassured.http.Header;
 import net.adultart.containers.LocalStackResource;
 import net.adultart.containers.PostgresResource;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
+import net.adultart.imageservice.model.ImagePrivacy;
 import net.adultart.util.JwtTokenGenerator;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -51,7 +52,7 @@ class UploadResourceTest {
         String jwtToken = JwtTokenGenerator.generateToken();
 
         long size = 50 * 1024 * 1024;
-        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, Set.of("test"));
+        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));
 
         given()
                 .header("Authorization", "Bearer " + jwtToken)
@@ -67,7 +68,7 @@ class UploadResourceTest {
         String jwtToken = JwtTokenGenerator.generateToken();
 
         long size = 3 * 1024 * 1024;
-        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, Set.of("test"));
+        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));
 
         given()
                 .header("Authorization", "Bearer " + jwtToken)
@@ -83,7 +84,7 @@ class UploadResourceTest {
         String jwtToken = "INVALID";
 
         long size = 3 * 1024 * 1024;
-        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, Set.of("test"));
+        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));
 
         given()
                 .header("Authorization", "Bearer " + jwtToken)

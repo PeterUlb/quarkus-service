@@ -59,10 +59,10 @@ public class ImageServiceImpl implements ImageService {
     @Override
     @Transactional
     public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto, long accountId) {
-        for (String tag : imageUploadRequestDto.getTags()) {
-            insertTag(tag);
-        }
+        // First try to insert the missing tags
+        insertMissingImageTags(imageUploadRequestDto.getTags());
 
+        // Now get all ids for the relevant tags, at this point all must exist
         Set<ImageTag> tags = imageUploadRequestDto.getTags().stream().map(s -> imageTagRepository.findByTag(s).orElseThrow()).collect(Collectors.toSet());
 
         Image image = Image.withInitialState(generateExternalKey(),
@@ -71,30 +71,27 @@ public class ImageServiceImpl implements ImageService {
                 imageUploadRequestDto.getDescription(),
                 imageUploadRequestDto.getFileName(),
                 imageUploadRequestDto.getSize(),
+                imageUploadRequestDto.getPrivacy(),
                 tags);
         imageRepository.persist(image);
         return image.getExternalKey();
     }
 
-    @Transactional(Transactional.TxType.REQUIRES_NEW)
-    public void insertTag(String tag) {
-        ImageTag imageTag = new ImageTag();
-        imageTag.setTag(tag);
-        try {
-            imageTagRepository.persistAndFlush(imageTag);
-        } catch (PersistenceException ignored) {
-        }
-    }
-
-
     @Override
-    @Transactional
-    public void processImageAfterUpload(String imageKey) throws UnsupportedImageException {
+    @Transactional(dontRollbackOn = UnsupportedImageException.class)
+    public void processImageAfterUpload(String imageKey) {
+        String externalId = imageKey;
+        int pos = imageKey.lastIndexOf("/");
+        if (pos != -1) {
+            externalId = imageKey.substring(pos + 1);
+        }
+
         Metadata metadata;
         try (ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(builder -> builder.bucket(awsImageConfig.getBucket()).key(imageKey))) {
             metadata = tikaUtil.extractMetadata(responseInputStream);
         } catch (IOException | TikaException | SAXException e) {
-            LOGGER.error("Error while reading object", e);
+            LOGGER.error("Error while reading object: " + e.getMessage());
+            imageRepository.findByExternalId(externalId).ifPresent(image -> image.setImageStatus(ImageStatus.REJECTED));
             return;
         }
 
@@ -113,20 +110,15 @@ public class ImageServiceImpl implements ImageService {
         }
 
         if (!supported) {
-            // DELETE, SET IMAGE STATUS, ...
-            throw new UnsupportedImageException(mimeType);
+            // TODO: DELETE, SET IMAGE STATUS, ...
+            imageRepository.findByExternalId(externalId).ifPresent(image -> image.setImageStatus(ImageStatus.REJECTED));
+            return;
         }
 
         long height = tikaUtil.getHeight(metadata);
         long width = tikaUtil.getWidth(metadata);
         LOGGER.debug("Height: " + height);
         LOGGER.debug("Width: " + width);
-
-        String externalId = imageKey;
-        int pos = imageKey.lastIndexOf("/");
-        if (pos != -1) {
-            externalId = imageKey.substring(pos + 1);
-        }
 
         Image image = imageRepository.findByExternalId(externalId).orElse(null);
         if (image == null) {
@@ -165,12 +157,43 @@ public class ImageServiceImpl implements ImageService {
                     builder -> builder
                             .getObjectRequest(objReq -> objReq
                                     .bucket(awsImageConfig.getBucket())
-                                    .key("uploads/" + image.getExternalKey()))
+                                    .key("images/" + image.getExternalKey()))
                             .signatureDuration(Duration.ofMinutes(10)));
             signedUrls.add(presignedGetObjectRequest.url().toExternalForm());
         }
 
         return signedUrls;
+    }
+
+    void insertMissingImageTags(Set<String> tags) {
+        Set<String> existingTags = imageTagRepository.findByTags(tags).stream().map(ImageTag::getTag).collect(Collectors.toSet());
+
+        int inserted = 0;
+        for (String tag : tags) {
+            if (!existingTags.contains(tag)) {
+                insertTag(tag);
+                inserted++;
+            }
+        }
+
+        LOGGER.debug(String.format("Inserted %d missing tags", inserted));
+    }
+
+    /**
+     * Tries to add the tag to the database. Ignores duplicate exceptions.
+     * Note: Since parallel requests might try to insert the same tag, and postgres throws `ERROR: current transaction is aborted, commands ignored until end of transaction block`
+     * on duplicate errors, each insert is handed of to a unique transaction
+     *
+     * @param tag The tag for the image
+     */
+    @Transactional(Transactional.TxType.REQUIRES_NEW)
+    void insertTag(String tag) {
+        ImageTag imageTag = new ImageTag();
+        imageTag.setTag(tag);
+        try {
+            imageTagRepository.persistAndFlush(imageTag);
+        } catch (PersistenceException ignored) {
+        }
     }
 
     private String generateExternalKey() {

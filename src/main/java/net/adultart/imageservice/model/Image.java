@@ -23,7 +23,7 @@ public class Image {
     private String description;
 
     @Column(nullable = false)
-    private String fileName;
+    private String filename;
 
     @Column
     private String extension;
@@ -40,12 +40,18 @@ public class Image {
     @Column
     private Long height;
 
+    @Column
+    @Enumerated(EnumType.STRING)
+    private ImagePrivacy privacy;
+
     @ManyToMany
     @JoinTable(
+            name = "image_image_tag",
             joinColumns = @JoinColumn(name = "image_id"),
             inverseJoinColumns = @JoinColumn(name = "image_tag_id"))
     private Set<ImageTag> tags;
 
+    @Column
     @Enumerated(EnumType.STRING)
     private ImageStatus imageStatus;
 
@@ -55,16 +61,17 @@ public class Image {
     @Column(nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
-    public static Image withInitialState(String externalKey, Long accountId, String title, String description, String fileName, Long size, Set<ImageTag> tags) {
+    public static Image withInitialState(String externalKey, Long accountId, String title, String description, String fileName, Long size, ImagePrivacy privacy, Set<ImageTag> tags) {
         Image image = new Image();
         image.setExternalKey(externalKey);
         image.setAccountId(accountId);
         image.setTitle(title);
         image.setDescription(description);
-        image.setFileName(fileName);
+        image.setFilename(fileName);
         image.setSize(size);
         image.setImageStatus(ImageStatus.REQUESTED);
         image.setTags(tags);
+        image.setPrivacy(privacy);
         return image;
     }
 
@@ -108,12 +115,12 @@ public class Image {
         this.description = description;
     }
 
-    public String getFileName() {
-        return fileName;
+    public String getFilename() {
+        return filename;
     }
 
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
+    public void setFilename(String fileName) {
+        this.filename = fileName;
     }
 
     public String getExtension() {
@@ -154,6 +161,14 @@ public class Image {
 
     public void setHeight(Long height) {
         this.height = height;
+    }
+
+    public ImagePrivacy getPrivacy() {
+        return privacy;
+    }
+
+    public void setPrivacy(ImagePrivacy privacy) {
+        this.privacy = privacy;
     }
 
     public Set<ImageTag> getTags() {
