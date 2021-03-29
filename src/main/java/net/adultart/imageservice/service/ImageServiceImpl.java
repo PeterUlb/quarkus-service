@@ -1,7 +1,11 @@
 package net.adultart.imageservice.service;
 
+import com.google.cloud.storage.Blob;
+import com.google.cloud.storage.BlobId;
+import com.google.cloud.storage.BlobInfo;
+import com.google.cloud.storage.Storage;
 import net.adultart.imageservice.api.UploadResource;
-import net.adultart.imageservice.config.AwsImageConfig;
+import net.adultart.imageservice.config.UploadProcessorConfig;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
 import net.adultart.imageservice.exception.UnsupportedImageException;
 import net.adultart.imageservice.model.Image;
@@ -17,21 +21,19 @@ import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.mime.MimeTypes;
 import org.jboss.logging.Logger;
 import org.xml.sax.SAXException;
-import software.amazon.awssdk.core.ResponseInputStream;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.presigner.S3Presigner;
-import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.PersistenceException;
 import javax.transaction.Transactional;
 import java.io.IOException;
-import java.time.Duration;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.channels.Channels;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @ApplicationScoped
@@ -45,16 +47,13 @@ public class ImageServiceImpl implements ImageService {
     ImageTagRepository imageTagRepository;
 
     @Inject
-    S3Client s3Client;
-
-    @Inject
-    AwsImageConfig awsImageConfig;
-
-    @Inject
     TikaUtil tikaUtil;
 
     @Inject
-    S3Presigner s3Presigner;
+    Storage storage;
+
+    @Inject
+    UploadProcessorConfig uploadProcessorConfig;
 
     @Override
     @Transactional
@@ -87,8 +86,13 @@ public class ImageServiceImpl implements ImageService {
         }
 
         Metadata metadata;
-        try (ResponseInputStream<GetObjectResponse> responseInputStream = s3Client.getObject(builder -> builder.bucket(awsImageConfig.getBucket()).key(imageKey))) {
-            metadata = tikaUtil.extractMetadata(responseInputStream);
+        Blob blob = storage.get(uploadProcessorConfig.getBucket(), imageKey);
+        if (blob == null) {
+            return;
+        }
+
+        try (InputStream inputStream = Channels.newInputStream(blob.reader())) {
+            metadata = tikaUtil.extractMetadata(inputStream);
         } catch (IOException | TikaException | SAXException e) {
             LOGGER.error("Error while reading object: " + e.getMessage());
             imageRepository.findByExternalId(externalId).ifPresent(image -> image.setImageStatus(ImageStatus.REJECTED));
@@ -153,13 +157,10 @@ public class ImageServiceImpl implements ImageService {
             if (image.getImageStatus() != ImageStatus.VERIFIED) {
                 continue;
             }
-            PresignedGetObjectRequest presignedGetObjectRequest = s3Presigner.presignGetObject(
-                    builder -> builder
-                            .getObjectRequest(objReq -> objReq
-                                    .bucket(awsImageConfig.getBucket())
-                                    .key("images/" + image.getExternalKey()))
-                            .signatureDuration(Duration.ofMinutes(10)));
-            signedUrls.add(presignedGetObjectRequest.url().toExternalForm());
+
+            BlobInfo blobInfo = BlobInfo.newBuilder(BlobId.of(uploadProcessorConfig.getBucket(), "images/" + image.getExternalKey())).build();
+            URL url = storage.signUrl(blobInfo, 10, TimeUnit.MINUTES, Storage.SignUrlOption.withV4Signature());
+            signedUrls.add(url.toExternalForm());
         }
 
         return signedUrls;

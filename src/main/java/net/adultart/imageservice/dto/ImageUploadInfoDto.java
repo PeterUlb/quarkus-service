@@ -1,25 +1,24 @@
 package net.adultart.imageservice.dto;
 
-import java.util.List;
 import java.util.Map;
 
 public class ImageUploadInfoDto {
-    private String awsUrl;
+    private String url;
     private String httpMethod;
-    private Map<String, List<String>> headers;
+    private Map<String, String> headers;
 
-    public ImageUploadInfoDto(String awsUrl, String httpMethod, Map<String, List<String>> headers) {
-        this.awsUrl = awsUrl;
+    public ImageUploadInfoDto(String url, String httpMethod, Map<String, String> headers) {
+        this.url = url;
         this.httpMethod = httpMethod;
         this.headers = headers;
     }
 
-    public String getAwsUrl() {
-        return awsUrl;
+    public String getUrl() {
+        return url;
     }
 
-    public void setAwsUrl(String awsUrl) {
-        this.awsUrl = awsUrl;
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public String getHttpMethod() {
@@ -30,11 +29,11 @@ public class ImageUploadInfoDto {
         this.httpMethod = httpMethod;
     }
 
-    public Map<String, List<String>> getHeaders() {
+    public Map<String, String> getHeaders() {
         return headers;
     }
 
-    public void setHeaders(Map<String, List<String>> headers) {
+    public void setHeaders(Map<String, String> headers) {
         this.headers = headers;
     }
 }

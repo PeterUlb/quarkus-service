@@ -49,8 +49,8 @@ A good overview for required dependencies can be found in the `/cfg/templates` f
 expected to run and be configured (for integration tests `wiremock` and `testcontainers` are used).
 
 1. Postgres db
-2. S3
-3. SQS
+2. Cloud Storage (currently no testcontainer :( )
+3. PubSub
 4. Redis
 
 Example for local development

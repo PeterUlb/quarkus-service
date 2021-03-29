@@ -7,7 +7,8 @@ import io.restassured.config.ObjectMapperConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.Header;
-import net.adultart.containers.LocalStackResource;
+import net.adultart.containers.GcpCloudStorageResource;
+import net.adultart.containers.GcpPubSubResource;
 import net.adultart.containers.PostgresResource;
 import net.adultart.containers.RedisResource;
 import net.adultart.imageservice.dto.ImageUploadRequestDto;
@@ -27,7 +28,8 @@ import static javax.ws.rs.core.Response.Status.*;
 
 @QuarkusTest
 @QuarkusTestResource(PostgresResource.class)
-@QuarkusTestResource(LocalStackResource.class)
+@QuarkusTestResource(GcpPubSubResource.class)
+@QuarkusTestResource(GcpCloudStorageResource.class)
 @QuarkusTestResource(RedisResource.class)
 class UploadResourceTest {
     @BeforeAll
@@ -70,11 +72,11 @@ class UploadResourceTest {
         String jwtToken = JwtTokenGenerator.generateToken();
 
         long size = 3 * 1024 * 1024;
-        ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));
+        ImageUploadRequestDto normalImage = new ImageUploadRequestDto("Normal Image", "Just a normal image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));
 
         given()
                 .header("Authorization", "Bearer " + jwtToken)
-                .body(hugeImage)
+                .body(normalImage)
                 .when()
                 .post("/image/request")
                 .then()

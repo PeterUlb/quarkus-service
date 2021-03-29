@@ -3,102 +3,92 @@ package net.adultart.imageservice.message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.quarkus.arc.properties.IfBuildProperty;
+import com.google.api.gax.batching.FlowControlSettings;
+import com.google.api.gax.core.ExecutorProvider;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
+import com.google.auth.Credentials;
+import com.google.cloud.pubsub.v1.AckReplyConsumer;
+import com.google.cloud.pubsub.v1.MessageReceiver;
+import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.PubsubMessage;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import net.adultart.imageservice.api.UploadResource;
-import net.adultart.imageservice.config.AwsImageConfig;
+import net.adultart.imageservice.config.GcpConfig;
 import net.adultart.imageservice.config.UploadProcessorConfig;
 import net.adultart.imageservice.service.ImageService;
 import org.jboss.logging.Logger;
-import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.Message;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicLong;
 
 @ApplicationScoped
-@IfBuildProperty(name = "upload.processor.poll-enabled", stringValue = "true", enableIfMissing = true)
-public class ImageUploadedReceiver {
+public class ImageUploadedReceiver implements MessageReceiver {
 
-    private static final Logger LOGGER = Logger.getLogger(UploadResource.class);
-    private final ScheduledExecutorService pollScheduler = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "sqs-poll"));
-    private final AtomicLong atomicLong = new AtomicLong();
+    private static final Logger LOG = Logger.getLogger(UploadResource.class);
+
     @Inject
-    SqsClient sqs;
+    Credentials credentials;
+
     @Inject
-    UploadProcessorConfig uploadProcessorConfig;
-    @Inject
-    AwsImageConfig awsImageConfig;
+    GcpConfig gcpConfig;
+
     @Inject
     ImageService imageService;
-    ThreadPoolExecutor executor;
+
+    @Inject
+    UploadProcessorConfig uploadProcessorConfig;
+
+    Subscriber subscriber;
 
     void onStart(@Observes StartupEvent ev) {
-        executor = new ThreadPoolExecutor(
-                uploadProcessorConfig.getPoolSize(),
-                uploadProcessorConfig.getPoolSize(),
-                0L,
-                TimeUnit.MILLISECONDS,
-                new ArrayBlockingQueue<>(uploadProcessorConfig.getQueueSize()),
-                r -> new Thread(r, "sqs-worker-" + atomicLong.getAndIncrement()));
+        ProjectSubscriptionName subscriptionName =
+                ProjectSubscriptionName.of(gcpConfig.getProjectId(), uploadProcessorConfig.getSubscriptionName());
 
-        // By default, this will long poll for 20 seconds (getLongPollingWait), and long poll again after 1 second (getPollDelay)
-        pollScheduler.scheduleWithFixedDelay(this::pollImageUploadedMessage, 1, uploadProcessorConfig.getPollDelay(), TimeUnit.SECONDS);
+        FlowControlSettings flowControlSettings =
+                FlowControlSettings.newBuilder()
+                        .setMaxOutstandingElementCount(uploadProcessorConfig.getQueueSize())
+                        .build();
+
+        ExecutorProvider executorProvider =
+                InstantiatingExecutorProvider.newBuilder().setExecutorThreadCount(uploadProcessorConfig.getPoolSize()).build();
+
+        Subscriber.Builder builder = Subscriber.newBuilder(subscriptionName, this)
+                .setCredentialsProvider(() -> credentials)
+                .setFlowControlSettings(flowControlSettings)
+                .setExecutorProvider(executorProvider);
+
+        gcpConfig.getPubSub().getEndpointOverride().ifPresent(s -> {
+            if (!s.isBlank()) {
+                builder.setEndpoint(s);
+            }
+        });
+
+        subscriber = builder.build();
+        subscriber.startAsync().awaitRunning();
     }
 
     void onStop(@Observes ShutdownEvent ev) {
-        pollScheduler.shutdown();
-        executor.shutdown();
+        subscriber.stopAsync();
     }
 
-    public void pollImageUploadedMessage() {
-        LOGGER.debug("Polling");
-        while (executor.getQueue().remainingCapacity() > 0) { //Best guess on how many to pull. Note: If there are multiple poller threads, this might not be reliable
-            List<Message> messages = sqs.receiveMessage(m -> m
-                    .maxNumberOfMessages(Math.min(10, executor.getQueue().remainingCapacity())) // SQS Limit is 10, and do not poll more than we can process
-                    .waitTimeSeconds(uploadProcessorConfig.getLongPollingWait())
-                    .queueUrl(awsImageConfig.getCreatedQueueUrl()))
-                    .messages();
-
-            LOGGER.debug(messages.size());
-
-            if (messages.isEmpty()) {
-                return;
-            }
-
-            for (Message message : messages) {
-                try {
-                    executor.submit(() -> {
-                        try {
-                            processMessage(message);
-                        } catch (JsonProcessingException e) {
-                            LOGGER.error("Processing of ImageCreated message failed", e);
-                        }
-                        LOGGER.debug("Delete msg");
-                        sqs.deleteMessage(m -> m.queueUrl(awsImageConfig.getCreatedQueueUrl()).receiptHandle(message.receiptHandle()));
-                    });
-                } catch (RejectedExecutionException ex) {
-                    // In this case, do NACK the message to be processed by someone else
-                    sqs.changeMessageVisibility(builder -> builder.queueUrl(awsImageConfig
-                            .getCreatedQueueUrl())
-                            .receiptHandle(message.receiptHandle())
-                            .visibilityTimeout(0));
-                }
-            }
-        }
-    }
 
     //TODO: Move to service
-    private void processMessage(Message message) throws JsonProcessingException {
-        LOGGER.debug(message.body());
-        JsonNode json = new ObjectMapper().readTree(message.body());
-        String key = json.at("/Records/0/s3/object/key").asText();
-        LOGGER.debug(key);
-        imageService.processImageAfterUpload(key);
+    @Override
+    public void receiveMessage(PubsubMessage message, AckReplyConsumer consumer) {
+        LOG.debug(message.getData().toStringUtf8());
+        JsonNode json = null;
+        try {
+            json = new ObjectMapper().readTree(message.getData().toStringUtf8());
+            String key = json.at("/name").asText();
+            LOG.debug(key);
+            imageService.processImageAfterUpload(key);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        } finally {
+            consumer.ack();
+        }
     }
 }

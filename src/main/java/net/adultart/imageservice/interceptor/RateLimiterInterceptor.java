@@ -47,8 +47,12 @@ public class RateLimiterInterceptor implements ContainerRequestFilter {
                         subject = request.remoteAddress().host();
                     }
                 }
-                if (rateLimiter.isRateLimited(subject, rL.group(), rL.maxRequests())) {
-                    context.abortWith(Response.status(Response.Status.TOO_MANY_REQUESTS).build());
+                try {
+                    if (rateLimiter.isRateLimited(subject, rL.group(), rL.maxRequests())) {
+                        context.abortWith(Response.status(Response.Status.TOO_MANY_REQUESTS).build());
+                    }
+                } catch (Exception e) {
+                    System.out.println("RateLimiter not available... TODO");
                 }
             });
         }
