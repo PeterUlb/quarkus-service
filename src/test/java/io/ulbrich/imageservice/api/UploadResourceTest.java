@@ -27,10 +27,10 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.*;
 
 @QuarkusTest
-@QuarkusTestResource(PostgresResource.class)
-@QuarkusTestResource(GcpPubSubResource.class)
-@QuarkusTestResource(GcpCloudStorageResource.class)
-@QuarkusTestResource(RedisResource.class)
+@QuarkusTestResource(value = PostgresResource.class, parallel = true)
+@QuarkusTestResource(value = GcpPubSubResource.class, parallel = true)
+@QuarkusTestResource(value = GcpCloudStorageResource.class, parallel = true)
+@QuarkusTestResource(value = RedisResource.class, parallel = true)
 class UploadResourceTest {
     @BeforeAll
     static void beforeAll() {

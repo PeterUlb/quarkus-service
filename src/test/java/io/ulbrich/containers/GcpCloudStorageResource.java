@@ -8,7 +8,10 @@ import java.util.Map;
 
 public class GcpCloudStorageResource implements QuarkusTestResourceLifecycleManager {
     private final GenericContainer<?> cloudStorage = new GenericContainer<>(DockerImageName.parse("fsouza/fake-gcs-server"))
-            .withExposedPorts(4443);
+            .withExposedPorts(4443)
+            .withCreateContainerCmdModifier(cmd -> {
+                cmd.withEntrypoint("/bin/fake-gcs-server", "-scheme", "http", "-backend", "memory");
+            });
 
     @Override
     public Map<String, String> start() {

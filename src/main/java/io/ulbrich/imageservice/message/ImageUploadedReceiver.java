@@ -15,8 +15,8 @@ import com.google.pubsub.v1.PubsubMessage;
 import io.quarkus.runtime.ShutdownEvent;
 import io.quarkus.runtime.StartupEvent;
 import io.ulbrich.imageservice.api.UploadResource;
-import io.ulbrich.imageservice.config.UploadProcessorConfig;
 import io.ulbrich.imageservice.config.GcpConfig;
+import io.ulbrich.imageservice.config.UploadProcessorConfig;
 import io.ulbrich.imageservice.service.ImageService;
 import org.jboss.logging.Logger;
 

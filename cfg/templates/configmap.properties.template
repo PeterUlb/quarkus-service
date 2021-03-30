@@ -2,7 +2,6 @@ config_ordinal=1000
 ######################
 ########CONFIG########
 ######################
-%prod.config_ordinal=
 %prod.quarkus.datasource.jdbc.url=
 # This one MUST be empty. Else it's used as fallback
 %prod.mp.jwt.verify.publickey=
@@ -15,3 +14,8 @@ config_ordinal=1000
 %prod.upload.processor.queue-size=
 %prod.upload.processor.bucket=
 %prod.upload.processor.subscription-name=
+######################
+######OPTIONAL########
+######################
+%prod.gcp.cloud-storage.endpoint-override=
+%prod.gcp.pub-sub.endpoint-override=
