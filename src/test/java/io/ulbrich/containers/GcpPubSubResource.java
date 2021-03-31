@@ -25,7 +25,7 @@ public class GcpPubSubResource implements QuarkusTestResourceLifecycleManager {
             DockerImageName.parse("gcr.io/google.com/cloudsdktool/cloud-sdk:316.0.0-emulators")
     );
 
-    private String mockProjectId = "mock-project";
+    private final String mockProjectId = "mock-project";
 
     @Override
     public Map<String, String> start() {
@@ -33,13 +33,13 @@ public class GcpPubSubResource implements QuarkusTestResourceLifecycleManager {
 
         String endpoint = pubSub.getEmulatorEndpoint();
         ManagedChannel channel = ManagedChannelBuilder.forTarget(endpoint).usePlaintext().build();
-        String subscriptionId = "img-upload-test-descr";
+        String subscriptionId = "img-upload-test-sub";
         try {
             TransportChannelProvider channelProvider =
                     FixedTransportChannelProvider.create(GrpcTransportChannel.create(channel));
             NoCredentialsProvider credentialsProvider = NoCredentialsProvider.create();
 
-            String topicId = "test-topic-1";
+            String topicId = "img-upload-test";
             createTopic(topicId, channelProvider, credentialsProvider);
 
             createSubscription(subscriptionId, topicId, channelProvider, credentialsProvider);
@@ -50,6 +50,7 @@ public class GcpPubSubResource implements QuarkusTestResourceLifecycleManager {
         }
 
         return Map.of(
+                "%test.gcp.project-id", mockProjectId,
                 "%test.gcp.pub-sub.endpoint-override", endpoint,
                 "%test.upload.processor.subscription-name", subscriptionId
         );
