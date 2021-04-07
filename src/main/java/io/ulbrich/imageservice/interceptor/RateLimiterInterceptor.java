@@ -16,7 +16,7 @@ import java.util.Arrays;
 import java.util.Optional;
 
 @Provider
-@RateLimited(group = 0, maxRequests = 0)
+@RateLimited(group = 0)
 public class RateLimiterInterceptor implements ContainerRequestFilter {
     @Inject
     JsonWebToken jwt;
@@ -48,7 +48,7 @@ public class RateLimiterInterceptor implements ContainerRequestFilter {
                     }
                 }
                 try {
-                    if (rateLimiter.isRateLimited(subject, rL.group(), rL.maxRequests())) {
+                    if (rateLimiter.isRateLimited(subject, rL.group())) {
                         context.abortWith(Response.status(Response.Status.TOO_MANY_REQUESTS).build());
                     }
                 } catch (Exception e) {

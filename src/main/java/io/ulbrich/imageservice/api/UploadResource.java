@@ -47,7 +47,7 @@ public class UploadResource {
 
     @POST
     @Path("/request")
-    @RateLimited(group = 1, maxRequests = 20)
+    @RateLimited(group = 1)
     public Response signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
         String externalKey = imageService.createImageEntry(imageUploadRequestDto, Long.parseLong(jwt.getSubject()));
 
@@ -95,7 +95,7 @@ public class UploadResource {
     @GET
     @Path("/test")
     @PermitAll
-    @RateLimited(group = 9998, maxRequests = 5)
+    @RateLimited(group = 9998)
     public Response testRateLimit() {
         return Response.ok().build();
     }
