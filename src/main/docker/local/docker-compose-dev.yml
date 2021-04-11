@@ -1,0 +1,7 @@
+version: "3.3"
+services:
+  redis:
+    ports:
+      - "6379:6379"
+    image: "redis:alpine"
+    command: [sh, -c, "rm -f /data/dump.rdb && redis-server --save ''"]
