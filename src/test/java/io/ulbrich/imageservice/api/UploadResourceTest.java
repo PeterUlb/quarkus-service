@@ -1,16 +1,11 @@
 package io.ulbrich.imageservice.api;
 
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.RestAssured;
 import io.restassured.config.ObjectMapperConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.Header;
-import io.ulbrich.containers.GcpCloudStorageResource;
-import io.ulbrich.containers.GcpPubSubResource;
-import io.ulbrich.containers.PostgresResource;
-import io.ulbrich.containers.RedisResource;
 import io.ulbrich.imageservice.dto.ImageUploadRequestDto;
 import io.ulbrich.imageservice.model.ImagePrivacy;
 import io.ulbrich.util.JwtTokenGenerator;
@@ -27,10 +22,6 @@ import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static javax.ws.rs.core.Response.Status.*;
 
 @QuarkusTest
-@QuarkusTestResource(value = PostgresResource.class, parallel = true)
-@QuarkusTestResource(value = GcpPubSubResource.class, parallel = true)
-@QuarkusTestResource(value = GcpCloudStorageResource.class, parallel = true)
-@QuarkusTestResource(value = RedisResource.class, parallel = true)
 class UploadResourceTest {
     @BeforeAll
     static void beforeAll() {

@@ -1,0 +1,34 @@
+version: "3.3"
+services:
+  redis:
+    ports:
+      - "6379:6379"
+    image: "redis:alpine"
+    command: [ sh, -c, "rm -f /data/dump.rdb && redis-server --save ''" ]
+
+  country-service-mock:
+    build: country-service
+    command: --port 8080
+    ports:
+      - "7070:8080"
+
+  fake-gcs-server:
+    build: fake-gcs-server
+    command: --port 8080
+    ports:
+      - "7071:8080"
+
+  postgres:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_USER: "dev"
+      POSTGRES_PASSWORD: "letmein"
+      POSTGRES_DB: "imageservicedb"
+    ports:
+      - "5555:5432"
+
+  gcp-pubsub-emulator:
+    image: "gcr.io/google.com/cloudsdktool/cloud-sdk:316.0.0-emulators"
+    ports:
+      - "8085:8085"
+    command: "gcloud beta emulators pubsub start --project image-service-test --host-port=0.0.0.0:8085"

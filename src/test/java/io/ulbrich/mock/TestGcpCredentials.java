@@ -1,4 +1,4 @@
-package io.ulbrich.mocks;
+package io.ulbrich.mock;
 
 import com.google.auth.Credentials;
 import com.google.auth.ServiceAccountSigner;

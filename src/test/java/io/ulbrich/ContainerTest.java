@@ -3,13 +3,11 @@ package io.ulbrich;
 import com.google.cloud.storage.Bucket;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.Storage;
-import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
-import io.ulbrich.containers.PostgresResource;
 import io.ulbrich.imageservice.model.Image;
 import io.ulbrich.imageservice.model.ImagePrivacy;
 import io.ulbrich.imageservice.repository.ImageRepository;
-import io.ulbrich.mocks.TestGcpCredentials;
+import io.ulbrich.mock.TestGcpCredentials;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -22,7 +20,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @QuarkusTest
-@QuarkusTestResource(PostgresResource.class)
 public class ContainerTest {
     @Inject
     ImageRepository imageRepository;
