@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import javax.inject.Inject;
 import java.util.Set;
 
 import static io.restassured.RestAssured.given;
@@ -23,6 +24,9 @@ import static javax.ws.rs.core.Response.Status.*;
 
 @QuarkusTest
 class UploadResourceTest {
+    @Inject
+    JwtTokenGenerator jwtTokenGenerator;
+
     @BeforeAll
     static void beforeAll() {
         RestAssured.filters(
@@ -44,7 +48,7 @@ class UploadResourceTest {
 
     @Test
     public void testSignRequestSizeRejected() {
-        String jwtToken = JwtTokenGenerator.generateToken();
+        String jwtToken = jwtTokenGenerator.generateToken();
 
         long size = 50 * 1024 * 1024;
         ImageUploadRequestDto hugeImage = new ImageUploadRequestDto("Huge Image", "A really huge image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));
@@ -60,7 +64,7 @@ class UploadResourceTest {
 
     @Test
     public void testSignRequestAccepted() {
-        String jwtToken = JwtTokenGenerator.generateToken();
+        String jwtToken = jwtTokenGenerator.generateToken();
 
         long size = 3 * 1024 * 1024;
         ImageUploadRequestDto normalImage = new ImageUploadRequestDto("Normal Image", "Just a normal image", "test.png", size, ImagePrivacy.PRIVATE, Set.of("test"));

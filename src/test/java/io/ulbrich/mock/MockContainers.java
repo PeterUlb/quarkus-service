@@ -24,13 +24,14 @@ import java.util.Map;
 @QuarkusTestResource(value = MockContainers.class, parallel = true)
 public class MockContainers implements QuarkusTestResourceLifecycleManager {
     public static DockerComposeContainer<?> environment =
-            new DockerComposeContainer<>(new File("src\\main\\docker\\mock\\compose-dev.yml"))
+            new DockerComposeContainer<>(new File("src\\main\\docker\\mock\\compose-local.yml"))
                     .withLocalCompose(true)
                     .withExposedService("redis_1", 6379)
                     .withExposedService("country-service-mock_1", 8080)
                     .withExposedService("fake-gcs-server_1", 8080)
                     .withExposedService("postgres_1", 5432)
-                    .withExposedService("gcp-pubsub-emulator_1", 8085);
+                    .withExposedService("gcp-pubsub-emulator_1", 8080)
+                    .withExposedService("keycloak_1", 8080);
 
     String subscriptionId = "img-upload-test-sub";
     String mockProjectId = "image-service-test";
@@ -55,22 +56,29 @@ public class MockContainers implements QuarkusTestResourceLifecycleManager {
                 environment.getServicePort("postgres_1", 5432));
 
         String pubSubEndpoint = String.format("%s:%s",
-                environment.getServiceHost("gcp-pubsub-emulator_1", 8085),
-                environment.getServicePort("gcp-pubsub-emulator_1", 8085));
+                environment.getServiceHost("gcp-pubsub-emulator_1", 8080),
+                environment.getServicePort("gcp-pubsub-emulator_1", 8080));
+
+        String keycloakUrl = String.format("http://%s:%s/auth/realms/image-service",
+                environment.getServiceHost("keycloak_1", 8080),
+                environment.getServicePort("keycloak_1", 8080));
 
         initPubSub(pubSubEndpoint);
 
-        return Map.of(
-                "%test.quarkus.redis.hosts", redisUrl,
-                "%test.country-api/mp-rest/url", countryServiceUrl,
-                "%test.gcp.cloud-storage.endpoint-override", gcsUrl,
-                "%test.quarkus.datasource.jdbc.url", postgresUrl,
-                "%test.quarkus.flyway.migrate-at-start", "true",
-                "%test.quarkus.datasource.username", "dev",
-                "%test.quarkus.datasource.password", "letmein",
-                "%test.gcp.project-id", mockProjectId,
-                "%test.gcp.pub-sub.endpoint-override", pubSubEndpoint,
-                "%test.upload.processor.subscription-name", subscriptionId
+        return Map.ofEntries(
+                Map.entry("%test.quarkus.redis.hosts", redisUrl),
+                Map.entry("%test.country-api/mp-rest/url", countryServiceUrl),
+                Map.entry("%test.gcp.cloud-storage.endpoint-override", gcsUrl),
+                Map.entry("%test.quarkus.datasource.jdbc.url", postgresUrl),
+                Map.entry("%test.quarkus.flyway.migrate-at-start", "true"),
+                Map.entry("%test.quarkus.datasource.username", "dev"),
+                Map.entry("%test.quarkus.datasource.password", "letmein"),
+                Map.entry("%test.gcp.project-id", mockProjectId),
+                Map.entry("%test.gcp.pub-sub.endpoint-override", pubSubEndpoint),
+                Map.entry("%test.upload.processor.subscription-name", subscriptionId),
+                Map.entry("%test.quarkus.oidc.auth-server-url", keycloakUrl),
+                Map.entry("%test.quarkus.oidc.credentials.secret", "secret"),
+                Map.entry("%test.quarkus.oidc.tls.verification", "none")
         );
     }
 

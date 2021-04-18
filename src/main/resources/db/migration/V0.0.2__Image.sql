@@ -2,7 +2,7 @@ CREATE TABLE image
 (
     id           bigserial                NOT NULL PRIMARY KEY,
     external_key character varying(20)    NOT NULL,
-    account_id   bigint                   NOT NULL,
+    account_id   uuid                     NOT NULL,
     title        text,
     description  text,
     filename     character varying(255)   NOT NULL,

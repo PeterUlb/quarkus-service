@@ -3,13 +3,9 @@ package io.ulbrich.imageservice.api;
 import io.ulbrich.imageservice.model.ext.Country;
 import io.ulbrich.imageservice.service.ext.CountryService;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.jboss.resteasy.annotations.jaxrs.PathParam;
 
 import javax.inject.Inject;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
@@ -23,7 +19,7 @@ public class CountryResource {
 
     @GET
     @Path("/{name}")
-    public Set<Country> name(@PathParam String name) {
+    public Set<Country> name(@PathParam("name") String name) {
         return countryService.getByName(name);
     }
 }

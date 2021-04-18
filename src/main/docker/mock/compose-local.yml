@@ -1,0 +1,61 @@
+version: "3.3"
+services:
+  redis:
+    ports:
+      - "6379:6379"
+    image: "redis:alpine"
+    command: [ sh, -c, "rm -f /data/dump.rdb && redis-server --save ''" ]
+
+  postgres:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_USER: "dev"
+      POSTGRES_PASSWORD: "letmein"
+      POSTGRES_DB: "imageservicedb"
+    ports:
+      - "5555:5432"
+
+  country-service-mock:
+    build: country-service
+    command: --port 8080
+    ports:
+      - "7070:8080"
+
+  fake-gcs-server:
+    build: fake-gcs-server
+    command: --port 8080
+    ports:
+      - "7071:8080"
+
+  keycloak-postgres:
+    image: "postgres:latest"
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+
+  keycloak:
+    image: "quay.io/keycloak/keycloak:12.0.4"
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: keycloak-postgres
+      DB_DATABASE: keycloak
+      DB_USER: keycloak
+      DB_SCHEMA: public
+      DB_PASSWORD: password
+      KEYCLOAK_USER: admin
+      KEYCLOAK_PASSWORD: admin
+    command:
+      - "-Dkeycloak.import=/opt/jboss/keycloak/examples-realm.json"
+    ports:
+      - "7072:8080"
+    volumes:
+      - ./examples-realm.json:/opt/jboss/keycloak/examples-realm.json
+    depends_on:
+      - keycloak-postgres
+
+  gcp-pubsub-emulator:
+    image: "gcr.io/google.com/cloudsdktool/cloud-sdk:316.0.0-emulators"
+    ports:
+      - "7073:8080"
+    command: "gcloud beta emulators pubsub start --project image-service-test --host-port=0.0.0.0:8080"

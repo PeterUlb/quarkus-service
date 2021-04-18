@@ -49,7 +49,7 @@ public class UploadResource {
     @Path("/request")
     @RateLimited(group = 1)
     public Response signed(@Valid ImageUploadRequestDto imageUploadRequestDto) {
-        String externalKey = imageService.createImageEntry(imageUploadRequestDto, Long.parseLong(jwt.getSubject()));
+        String externalKey = imageService.createImageEntry(imageUploadRequestDto, UUID.fromString(jwt.getSubject()));
 
         List<Acl> aclList;
         if (imageUploadRequestDto.getPrivacy().equals(ImagePrivacy.PUBLIC)) {

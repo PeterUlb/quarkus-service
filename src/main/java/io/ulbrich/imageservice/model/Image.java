@@ -3,6 +3,7 @@ package io.ulbrich.imageservice.model;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.Set;
+import java.util.UUID;
 
 @Entity
 public class Image {
@@ -14,7 +15,7 @@ public class Image {
     private String externalKey;
 
     @Column(nullable = false)
-    private Long accountId;
+    private UUID accountId;
 
     @Column
     private String title;
@@ -61,7 +62,7 @@ public class Image {
     @Column(nullable = false, insertable = false)
     private LocalDateTime updatedAt;
 
-    public static Image withInitialState(String externalKey, Long accountId, String title, String description, String fileName, Long size, ImagePrivacy privacy, Set<ImageTag> tags) {
+    public static Image withInitialState(String externalKey, UUID accountId, String title, String description, String fileName, Long size, ImagePrivacy privacy, Set<ImageTag> tags) {
         Image image = new Image();
         image.setExternalKey(externalKey);
         image.setAccountId(accountId);
@@ -91,11 +92,11 @@ public class Image {
         this.externalKey = externalKey;
     }
 
-    public Long getAccountId() {
+    public UUID getAccountId() {
         return accountId;
     }
 
-    public void setAccountId(Long accountId) {
+    public void setAccountId(UUID accountId) {
         this.accountId = accountId;
     }
 

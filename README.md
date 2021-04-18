@@ -52,9 +52,16 @@ used).
 2. Cloud Storage
 3. PubSub
 4. Redis
+5. Keycloak
 
 This project provides a `docker-compose.yml` file in `/src/main/docker/mock` to set up dependencies. You can of course
 override e.g. the postgres url (as mentioned above) to point to another instance, e.g. a locally installed one.
+
+## JWT from Dev Keycloak
+
+The following command will create an access token in the dev landscape (if docker-compose is used):
+
+`curl --insecure -X POST http://localhost:7072/auth/realms/image-service/protocol/openid-connect/token     --user image-service:secret -H 'content-type: application/x-www-form-urlencoded' -d 'username=alice&password=alice&grant_type=password' | jq --raw-output '.access_token'`
 
 ## SmallRye Config Behavior
 

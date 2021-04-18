@@ -33,6 +33,7 @@ import java.nio.channels.Channels;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -57,7 +58,7 @@ public class ImageServiceImpl implements ImageService {
 
     @Override
     @Transactional
-    public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto, long accountId) {
+    public String createImageEntry(ImageUploadRequestDto imageUploadRequestDto, UUID accountId) {
         // First try to insert the missing tags
         insertMissingImageTags(imageUploadRequestDto.getTags());
 

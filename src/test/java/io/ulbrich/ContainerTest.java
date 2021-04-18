@@ -16,6 +16,7 @@ import javax.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
@@ -30,7 +31,7 @@ public class ContainerTest {
     @Test
     @Transactional
     public void testWithContainers() {
-        imageRepository.persist(Image.withInitialState("TEST", 1L, "", "", "", 1L, ImagePrivacy.PRIVATE, Set.of()));
+        imageRepository.persist(Image.withInitialState("TEST", UUID.randomUUID(), "", "", "", 1L, ImagePrivacy.PRIVATE, Set.of()));
         imageRepository.flush();
         Optional<Image> image = imageRepository.findByExternalId("TEST");
         assertNotNull(image.orElse(null));
